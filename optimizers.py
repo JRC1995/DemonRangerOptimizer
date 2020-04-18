@@ -1,16 +1,8 @@
 from torch.optim.optimizer import Optimizer, required
-from torch.optim.optimizer import Optimizer
-from math import sqrt
 import torch
-from torch.optim import Optimizer
 import math
 import numpy as np
-import torch as T
 
-
-import math
-import torch
-from torch.optim.optimizer import Optimizer, required
 
 
 class DemonRanger(Optimizer):
