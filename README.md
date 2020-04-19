@@ -58,9 +58,9 @@ optimizer = DemonRanger(params=model.parameters(),
                         weight_decay=config.wd,
                         IA=False, # disables Iterative Averaging
                         rectify=False, # disables RAdam Recitification
-                        AdaMod=False #disables AdaMod
-                        use_demon=False #disables Decaying Momentum (DEMON)
-                        use_gc=False #disables gradient centralization
+                        AdaMod=False, #disables AdaMod
+                        use_demon=False, #disables Decaying Momentum (DEMON)
+                        use_gc=False, #disables gradient centralization
                         amsgrad=False # disables amsgrad
                         )
                         
@@ -82,8 +82,8 @@ optimizer = DemonRanger(params=model.parameters(),
                         IA=False, # disables Iterative Averaging
                         rectify=False, # disables RAdam Recitification
                         AdaMod=False #disables AdaMod
-                        use_demon=False #disables Decaying Momentum (DEMON)
-                        use_gc=False #disables gradient centralization
+                        use_demon=False, #disables Decaying Momentum (DEMON)
+                        use_gc=False, #disables gradient centralization
                         amsgrad=True # disables amsgrad
                         )
                         
@@ -101,7 +101,7 @@ optimizer = DemonRanger(params=model.parameters(),
                         weight_decay=config.wd,
                         IA=False, # disables Iterative Averaging
                         rectify=False, # disables RAdam Recitification
-                        AdaMod=False #disables AdaMod
+                        AdaMod=False, #disables AdaMod
                         use_demon=False, #disables Decaying Momentum (DEMON)
                         use_gc=False, #disables gradient centralization
                         amsgrad=False # disables amsgrad
@@ -122,7 +122,6 @@ optimizer = DemonRanger(params=model.parameters(),
                         alpha=1.0, 
                         weight_decay=config.wd,
                         IA=False, # disables Iterative Averaging
-                        rectify=True, # disables RAdam Recitification
                         AdaMod=False, #disables AdaMod
                         use_demon=False, #disables Decaying Momentum (DEMON)
                         use_gc=False, #disables gradient centralization
@@ -140,7 +139,6 @@ optimizer = DemonRanger(params=model.parameters(),
                         nus=(1.0,1.0), # disables QHMomentum
                         weight_decay=config.wd,
                         IA=False, # disables Iterative Averaging
-                        rectify=True, # disables RAdam Recitification
                         AdaMod=False, #disables AdaMod
                         use_demon=False, #disables Decaying Momentum (DEMON)
                         use_gc=False, #disables gradient centralization
@@ -157,7 +155,6 @@ optimizer = DemonRanger(params=model.parameters(),
                         lr=config.lr,
                         weight_decay=config.wd,
                         IA=False, # disables Iterative Averaging
-                        rectify=True, # disables RAdam Recitification
                         AdaMod=False, #disables AdaMod
                         use_demon=False, #disables Decaying Momentum (DEMON)
                         use_gc=False, #disables gradient centralization
@@ -178,7 +175,6 @@ optimizer = DemonRanger(params=model.parameters(),
                         alpha=1.0, 
                         IA=False, # disables Iterative Averaging
                         rectify=False, # disables RAdam Recitification
-                        AdaMod=True, #disables AdaMod
                         AdaMod_bias_correct=False, #disables AdaMod bias corretion (not used originally)
                         use_demon=False #disables Decaying Momentum (DEMON)
                         use_gc=False #disables gradient centralization
@@ -197,7 +193,27 @@ optimizer = DemonRanger(params=model.parameters(),
                         nus=(1.0,1.0), # disables QHMomentum
                         k=0,  # disables lookahead
                         alpha=1.0, 
-                        IA=True, # disables Iterative Averaging
+                        IA=True, # enables Iterative Averaging
+                        rectify=False, # disables RAdam Recitification
+                        AdaMod=False, #disables AdaMod
+                        use_demon=False, #disables Decaying Momentum (DEMON)
+                        use_gc=False, #disables gradient centralization
+                        amsgrad=False # disables amsgrad
+                        )
+# just do optimizer.step(IA_activate=IA_activate) when necessary (change IA_activate to True near the end of training based on some scheduling scheme or tuned hyperparameter--- alternative to learning rate scheduling)
+```
+
+## Recover GAdam + LookAhead
+
+```
+optimizer = DemonRanger(params=model.parameters(),
+                        lr=config.lr,
+                        weight_decay=config.wd,
+                        betas=(0.9,0.999,0.999), # restore default AdamW betas
+                        nus=(1.0,1.0), # disables QHMomentum
+                        k=5,  # enables lookahead
+                        alpha=0.88, 
+                        IA=True, # enables Iterative Averaging
                         rectify=False, # disables RAdam Recitification
                         AdaMod=False, #disables AdaMod
                         use_demon=False, #disables Decaying Momentum (DEMON)
@@ -219,11 +235,11 @@ optimizer = DemonRanger(params=model.parameters(),
                         nus=(1.0,1.0), # disables QHMomentum
                         k=0,  # disables lookahead
                         alpha=1.0, 
-                        IA=True, # disables Iterative Averaging
+                        IA=False, # enables Iterative Averaging
                         rectify=False, # disables RAdam Recitification
-                        AdaMod=True, #disables AdaMod
+                        AdaMod=False, #disables AdaMod
                         AdaMod_bias_correct=False, #disables AdaMod bias corretion (not used originally)
-                        use_demon=True, #disables Decaying Momentum (DEMON)
+                        use_demon=True, #enables Decaying Momentum (DEMON)
                         use_gc=False, #disables gradient centralization
                         amsgrad=False # disables amsgrad
                         )
