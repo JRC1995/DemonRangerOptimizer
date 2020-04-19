@@ -4,7 +4,6 @@ import math
 import numpy as np
 
 
-
 class DemonRanger(Optimizer):
 
     def __init__(self, params, lr=1e-3,
@@ -18,6 +17,7 @@ class DemonRanger(Optimizer):
                  rectify=True,
                  amsgrad=True,
                  AdaMod=True,
+                 AdaMod_bias_correct=True,
                  IA=True,
                  IA_cycle=1000,
                  epochs=100,
@@ -51,6 +51,7 @@ class DemonRanger(Optimizer):
         self.IA = IA
         self.rectify = rectify
         self.AdaMod = AdaMod
+        self.AdaMod_bias_correct = AdaMod_bias_correct
         if step_per_epoch is None:
             self.step_per_epoch = IA_cycle
         else:
@@ -69,6 +70,13 @@ class DemonRanger(Optimizer):
 
     def __setstate__(self, state):
         super(DemonRanger, self).__setstate__(state)
+
+    def apply_AdaMod(self, beta3, n_avg, n, step):
+        n_avg.mul_(beta3).add_(1 - beta3, n)
+        if self.AdaMod_bias_correct:
+            n_avg.div_(1 - (beta3 ** step))
+        torch.min(n, n_avg, out=n)
+        return n
 
     def step(self, activate_IA=False, closure=None):
 
@@ -140,9 +148,8 @@ class DemonRanger(Optimizer):
                 exp_avg_sq.mul_(beta2).addcmul_(1 - beta2, grad, grad)
                 exp_avg.mul_(beta1).add_(1 - beta1, grad)
 
-                bias_correction1 = 1 - (beta1 ** state['step'])
-                numer = exp_avg.clone()
-                numer.div_(bias_correction1).mul_(nu1).add_(1-nu1, grad)
+                momentum = exp_avg.clone()
+                momentum.div_(1 - (beta1 ** state['step'])).mul_(nu1).add_(1-nu1, grad)
 
                 if wd != 0:
                     p.data.add_(-wd*lr, p.data)
@@ -174,12 +181,11 @@ class DemonRanger(Optimizer):
 
                         if self.AdaMod:
                             n_avg = state['n_avg']
-                            n_avg.mul_(beta3).add_(1 - beta3, n)
-                            torch.min(n, n_avg, out=n)
+                            n = self.apply_AdaMod(beta3, n_avg, n, step=state['step'])
 
-                        p.data.add_(-n*numer)
+                        p.data.add_(-n*momentum)
                     else:
-                        p.data.add_(-lr, numer)
+                        p.data.add_(-lr, momentum)
                 else:
                     bias_correction2 = 1 - beta2_t
                     vt.div_(bias_correction2)
@@ -189,10 +195,9 @@ class DemonRanger(Optimizer):
                     n = lr/denom
                     if self.AdaMod:
                         n_avg = state['n_avg']
-                        n_avg.mul_(beta3).add_(1 - beta3, n)
-                        torch.min(n, n_avg, out=n)
+                        n = self.apply_AdaMod(beta3, n_avg, n, step=state['step'])
 
-                    p.data.add_(-n*numer)
+                    p.data.add_(-n*momentum)
 
                 if lookahead_step:
                     p.data.mul_(alpha).add_(1.0 - alpha, state['cached_params'])
