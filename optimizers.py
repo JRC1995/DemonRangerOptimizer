@@ -74,8 +74,11 @@ class DemonRanger(Optimizer):
     def apply_AdaMod(self, beta3, n_avg, n, step):
         n_avg.mul_(beta3).add_(1 - beta3, n)
         if self.AdaMod_bias_correct:
-            n_avg.div_(1 - (beta3 ** step))
-        torch.min(n, n_avg, out=n)
+            n_avg_ = n_avg.clone()
+            n_avg_.div_(1 - (beta3 ** step))
+            torch.min(n, n_avg_, out=n)
+        else:
+            torch.min(n, n_avg, out=n)
         return n
 
     def step(self, activate_IA=False, closure=None):
@@ -185,6 +188,9 @@ class DemonRanger(Optimizer):
 
                         p.data.add_(-n*momentum)
                     else:
+                        if self.AdaMod:
+                            n_avg = state['n_avg']
+                            n_avg.mul_(beta3).add_(1 - beta3, lr)
                         p.data.add_(-lr, momentum)
                 else:
                     bias_correction2 = 1 - beta2_t
