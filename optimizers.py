@@ -36,8 +36,8 @@ class DemonRanger(Optimizer):
         #rectify = bool to decide whether to apply the recitification term (from RAdam) or not
         #amsgrad = bool to decide whether to use amsgrad instead of adam as the core optimizer
         #AdaMod_bias_correct = bool to decide whether to add bias correction to AdaMod
-        #IA = bool to decide if Iterative Averaging is ever going to be used
-        #IA_cycle = Iterative Averaging Cycle (Recommended to initialize with no. of iterations in Epoch) (doesn't matter if you are not using IA)
+        #IA = bool to decide if Iterate Averaging is ever going to be used
+        #IA_cycle = Iterate Averaging Cycle (Recommended to initialize with no. of iterations in Epoch) (doesn't matter if you are not using IA)
         #epochs = No. of epochs you plan to use (Only relevant if using DEMON)
         #step_per_epoch = No. of iterations in an epoch (only relevant if using DEMON)
         #weight decay = decorrelated weight decay value
