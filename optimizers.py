@@ -25,6 +25,24 @@ class DemonRanger(Optimizer):
                  weight_decay=0,
                  use_gc=True,
                  use_grad_noise=False):
+        
+        #betas = (beta1 for first order moments, beta2 for second order moments, beta3 for ema over adaptive learning rates (AdaMod))
+        #nus = (nu1,nu2) (for quasi hyperbolic momentum)
+        #eps = small value for numerical stability (avoid divide by zero)
+        #k = lookahead cycle
+        #alpha = outer learning rate (lookahead)
+        #gamma = gradient noise control parameter (for regularization)
+        #use_demon = bool to decide whether to use DEMON (Decaying Momentum) or not
+        #rectify = bool to decide whether to apply the recitification term (from RAdam) or not
+        #amsgrad = bool to decide whether to use amsgrad instead of adam as the core optimizer
+        #AdaMod_bias_correct = bool to decide whether to add bias correction to AdaMod
+        #IA = bool to decide if Iterative Averaging is ever going to be used
+        #IA_cycle = Iterative Averaging Cycle (Recommended to initialize with no. of iterations in Epoch) (doesn't matter if you are not using IA)
+        #epochs = No. of epochs you plan to use (Only relevant if using DEMON)
+        #step_per_epoch = No. of iterations in an epoch (only relevant if using DEMON)
+        #weight decay = decorrelated weight decay value
+        #use_gc = bool to determine whether to use gradient centralization or not.
+        #use_grad_noise = bool to determine whether to use gradient noise or not. 
 
         if not 0.0 <= lr:
             raise ValueError("Invalid learning rate: {}".format(lr))
@@ -82,6 +100,8 @@ class DemonRanger(Optimizer):
         return n
 
     def step(self, activate_IA=False, closure=None):
+        
+        # disables lookahead and starts doing IA if activate_IA is true
 
         loss = None
         if closure is not None:
