@@ -1,6 +1,8 @@
 # DemonRangerOptimizer
 
-Quasi Hyperbolic Rectified DEMON (Decaying Momentum) Adam/Amsgrad with AdaMod, Gradient Centralization, Lookahead, iterate averaging, and decorrelated weight decay
+Quasi Hyperbolic Rectified DEMON (Decaying Momentum) Adam/Amsgrad with AdaMod, Gradient Centralization, Lookahead, iterate averaging, and decorrelated weight decay.
+
+Also, other variants with Nostalgia (NosAdam), P (from PAdam), and Hypergradient Descent. 
 
 ## How to use:
 
@@ -263,14 +265,17 @@ optimizer = DemonRanger(params=model.parameters(),
  
  * Adam: [https://arxiv.org/abs/1412.6980](https://arxiv.org/abs/1412.6980)
  * AMSGrad: https://arxiv.org/abs/1904.09237
- * QHAdam: https://arxiv.org/abs/1810.06801
+ * QHAdam: https://arxiv.org/abs/1810.06801, https://github.com/facebookresearch/qhoptim/blob/master/qhoptim/pyt/qhadam.py
  * Gradient Noise: https://arxiv.org/abs/1511.06807
  * AdamW: https://arxiv.org/abs/1711.05101
- * RAdam: https://arxiv.org/abs/1908.03265
+ * RAdam: https://arxiv.org/abs/1908.03265, https://github.com/LiyuanLucasLiu/RAdam
  * Lookahead: https://arxiv.org/abs/1907.08610
  * Ranger: https://github.com/lessw2020/Ranger-Deep-Learning-Optimizer
  * Gradient Centralization: https://arxiv.org/abs/2004.01461v2
  * DEMON (Decaying Momentum): https://arxiv.org/abs/1910.04952
  * AdaMod: https://arxiv.org/abs/1910.12249
- * GAdam (Iterate Averaging): https://arxiv.org/abs/2003.01247
+ * GAdam (Iterate Averaging): https://arxiv.org/abs/2003.01247, https://github.com/diegogranziol/Gadam
+ * Hypergradient Descent: https://arxiv.org/abs/1703.04782, https://github.com/gbaydin/hypergradient-descent
+ * Nostalgic Adam: https://arxiv.org/abs/1805.07557, https://github.com/andrehuang/NostalgicAdam-NosAdam
+ * PAdam: https://arxiv.org/abs/1806.06763, https://github.com/uclaml/Padam, https://arxiv.org/pdf/1901.09517.pdf
  
