@@ -25,24 +25,24 @@ class DemonRanger(Optimizer):
                  weight_decay=0,
                  use_gc=True,
                  use_grad_noise=False):
-        
-        #betas = (beta1 for first order moments, beta2 for second order moments, beta3 for ema over adaptive learning rates (AdaMod))
-        #nus = (nu1,nu2) (for quasi hyperbolic momentum)
-        #eps = small value for numerical stability (avoid divide by zero)
-        #k = lookahead cycle
-        #alpha = outer learning rate (lookahead)
-        #gamma = gradient noise control parameter (for regularization)
-        #use_demon = bool to decide whether to use DEMON (Decaying Momentum) or not
-        #rectify = bool to decide whether to apply the recitification term (from RAdam) or not
-        #amsgrad = bool to decide whether to use amsgrad instead of adam as the core optimizer
-        #AdaMod_bias_correct = bool to decide whether to add bias correction to AdaMod
-        #IA = bool to decide if Iterate Averaging is ever going to be used
-        #IA_cycle = Iterate Averaging Cycle (Recommended to initialize with no. of iterations in Epoch) (doesn't matter if you are not using IA)
-        #epochs = No. of epochs you plan to use (Only relevant if using DEMON)
-        #step_per_epoch = No. of iterations in an epoch (only relevant if using DEMON)
-        #weight decay = decorrelated weight decay value
-        #use_gc = bool to determine whether to use gradient centralization or not.
-        #use_grad_noise = bool to determine whether to use gradient noise or not. 
+
+        # betas = (beta1 for first order moments, beta2 for second order moments, beta3 for ema over adaptive learning rates (AdaMod))
+        # nus = (nu1,nu2) (for quasi hyperbolic momentum)
+        # eps = small value for numerical stability (avoid divide by zero)
+        # k = lookahead cycle
+        # alpha = outer learning rate (lookahead)
+        # gamma = gradient noise control parameter (for regularization)
+        # use_demon = bool to decide whether to use DEMON (Decaying Momentum) or not
+        # rectify = bool to decide whether to apply the recitification term (from RAdam) or not
+        # amsgrad = bool to decide whether to use amsgrad instead of adam as the core optimizer
+        # AdaMod_bias_correct = bool to decide whether to add bias correction to AdaMod
+        # IA = bool to decide if Iterate Averaging is ever going to be used
+        # IA_cycle = Iterate Averaging Cycle (Recommended to initialize with no. of iterations in Epoch) (doesn't matter if you are not using IA)
+        # epochs = No. of epochs you plan to use (Only relevant if using DEMON)
+        # step_per_epoch = No. of iterations in an epoch (only relevant if using DEMON)
+        # weight decay = decorrelated weight decay value
+        # use_gc = bool to determine whether to use gradient centralization or not.
+        # use_grad_noise = bool to determine whether to use gradient noise or not.
 
         if not 0.0 <= lr:
             raise ValueError("Invalid learning rate: {}".format(lr))
@@ -100,8 +100,6 @@ class DemonRanger(Optimizer):
         return n
 
     def step(self, activate_IA=False, closure=None):
-        
-        # disables lookahead and starts doing IA if activate_IA is true
 
         loss = None
         if closure is not None:
@@ -236,8 +234,7 @@ class DemonRanger(Optimizer):
                     state["num_models"] += 1
 
         return loss
-    
-    
+
 
 class HyperRanger(Optimizer):
 
@@ -260,26 +257,26 @@ class HyperRanger(Optimizer):
                  step_per_epoch=None,
                  weight_decay=0,
                  use_gc=True):
-        
-        #betas = (beta1 for first order moments, beta2 for second order moments)
-        #nus = (nu1,nu2) (for quasi hyperbolic momentum)
-        #eps = small value for numerical stability (avoid divide by zero)
-        #k = lookahead cycle
-        #alpha = outer learning rate (lookahead)
-        #gamma = used for nostalgia
-        #nostalgia = bool to decide whether to use nostalgia (from Nostalgic Adam or NosAdam)
-        #use_demon = bool to decide whether to use DEMON (Decaying Momentum) or not
-        #hypergrad_lr = learning rate for updating hyperparameters (like lr) through hypergradient descent (probably need to increase around 0.02 if HDM is True). Set to 0.0 to disable hypergradient descent.
-        #HDM = bool to decide whether to use Multiplicative rule for updating hyperparameters or not
-        #hypertune_nu1 = bool to decide whether apply hypergradient descent on nu1 as well or not.
-        #p = p from PAdam
-        #IA = bool to decide if Iterate Averaging is ever going to be used
-        #IA_cycle = Iterate Averaging Cycle (Recommended to initialize with no. of iterations in Epoch) (doesn't matter if you are not using IA)
-        #epochs = No. of epochs you plan to use (Only relevant if using DEMON)
-        #step_per_epoch = No. of iterations in an epoch (only relevant if using DEMON)
-        #weight decay = decorrelated weight decay value
-        #use_gc = bool to determine whether to use gradient centralization or not.
-        #use_grad_noise = bool to determine whether to use gradient noise or not. 
+
+        # betas = (beta1 for first order moments, beta2 for second order moments)
+        # nus = (nu1,nu2) (for quasi hyperbolic momentum)
+        # eps = small value for numerical stability (avoid divide by zero)
+        # k = lookahead cycle
+        # alpha = outer learning rate (lookahead)
+        # gamma = used for nostalgia
+        # nostalgia = bool to decide whether to use nostalgia (from Nostalgic Adam or NosAdam)
+        # use_demon = bool to decide whether to use DEMON (Decaying Momentum) or not
+        # hypergrad_lr = learning rate for updating hyperparameters (like lr) through hypergradient descent (probably need to increase around 0.02 if HDM is True). Set to 0.0 to disable hypergradient descent.
+        # HDM = bool to decide whether to use Multiplicative rule for updating hyperparameters or not
+        # hypertune_nu1 = bool to decide whether apply hypergradient descent on nu1 as well or not.
+        # p = p from PAdam
+        # IA = bool to decide if Iterate Averaging is ever going to be used
+        # IA_cycle = Iterate Averaging Cycle (Recommended to initialize with no. of iterations in Epoch) (doesn't matter if you are not using IA)
+        # epochs = No. of epochs you plan to use (Only relevant if using DEMON)
+        # step_per_epoch = No. of iterations in an epoch (only relevant if using DEMON)
+        # weight decay = decorrelated weight decay value
+        # use_gc = bool to determine whether to use gradient centralization or not.
+        # use_grad_noise = bool to determine whether to use gradient noise or not.
 
         if not 0.0 <= lr:
             raise ValueError("Invalid learning rate: {}".format(lr))
@@ -408,6 +405,8 @@ class HyperRanger(Optimizer):
                     else:
                         group['lr'] -= hypergrad_lr * h
 
+                    torch.max(group['lr'], torch.zeros_like(group['lr']), out=group['lr'])
+
                     if display:
                         print(group['lr'])
 
@@ -465,8 +464,7 @@ class HyperRanger(Optimizer):
                     state["num_models"] += 1
 
         return loss
-    
-    
+
 
 class HyperRangerMod(Optimizer):
 
@@ -488,27 +486,27 @@ class HyperRangerMod(Optimizer):
                  step_per_epoch=None,
                  weight_decay=0,
                  use_gc=True):
-        
-        #betas = (beta1 for first order moments, beta2 for second order moments, beta3 for AdaMod) # set beta3 = 0 to disable AdaMod
-        #nus = (nu1,nu2) (for quasi hyperbolic momentum)
-        #eps = small value for numerical stability (avoid divide by zero)
-        #AdaMod_bias_correct = bool to determine whether to apply bias correction on AdaMod or not
-        #k = lookahead cycle
-        #alpha = outer learning rate (lookahead)
-        #gamma = used for nostalgia
-        #nostalgia = bool to decide whether to use nostalgia (from Nostalgic Adam or NosAdam)
-        #use_demon = bool to decide whether to use DEMON (Decaying Momentum) or not
-        #hypergrad_lr = learning rate for updating hyperparameters (like lr) through hypergradient descent (probably need to increase around 0.02 if HDM is True). Set to 0.0 to disable hypergradient descent.
-        #HDM = bool to decide whether to use Multiplicative rule for updating hyperparameters or not
-        #hypertune_nu1 = bool to decide whether apply hypergradient descent on nu1 as well or not.
-        #p = p from PAdam
-        #IA = bool to decide if Iterate Averaging is ever going to be used
-        #IA_cycle = Iterate Averaging Cycle (Recommended to initialize with no. of iterations in Epoch) (doesn't matter if you are not using IA)
-        #epochs = No. of epochs you plan to use (Only relevant if using DEMON)
-        #step_per_epoch = No. of iterations in an epoch (only relevant if using DEMON)
-        #weight decay = decorrelated weight decay value
-        #use_gc = bool to determine whether to use gradient centralization or not.
-        #use_grad_noise = bool to determine whether to use gradient noise or not. 
+
+        # betas = (beta1 for first order moments, beta2 for second order moments, beta3 for AdaMod) # set beta3 = 0 to disable AdaMod
+        # nus = (nu1,nu2) (for quasi hyperbolic momentum)
+        # eps = small value for numerical stability (avoid divide by zero)
+        # AdaMod_bias_correct = bool to determine whether to apply bias correction on AdaMod or not
+        # k = lookahead cycle
+        # alpha = outer learning rate (lookahead)
+        # gamma = used for nostalgia
+        # nostalgia = bool to decide whether to use nostalgia (from Nostalgic Adam or NosAdam)
+        # use_demon = bool to decide whether to use DEMON (Decaying Momentum) or not
+        # hypergrad_lr = learning rate for updating hyperparameters (like lr) through hypergradient descent (probably need to increase around 0.02 if HDM is True). Set to 0.0 to disable hypergradient descent.
+        # HDM = bool to decide whether to use Multiplicative rule for updating hyperparameters or not
+        # hypertune_nu1 = bool to decide whether apply hypergradient descent on nu1 as well or not.
+        # p = p from PAdam
+        # IA = bool to decide if Iterate Averaging is ever going to be used
+        # IA_cycle = Iterate Averaging Cycle (Recommended to initialize with no. of iterations in Epoch) (doesn't matter if you are not using IA)
+        # epochs = No. of epochs you plan to use (Only relevant if using DEMON)
+        # step_per_epoch = No. of iterations in an epoch (only relevant if using DEMON)
+        # weight decay = decorrelated weight decay value
+        # use_gc = bool to determine whether to use gradient centralization or not.
+        # use_grad_noise = bool to determine whether to use gradient noise or not.
 
         if not 0.0 <= lr:
             raise ValueError("Invalid learning rate: {}".format(lr))
@@ -548,10 +546,10 @@ class HyperRangerMod(Optimizer):
                         p=p,
                         hypergrad_lr=hypergrad_lr,
                         weight_decay=weight_decay)
-        super(PowerRanger, self).__init__(params, defaults)
+        super(HyperRangerMod, self).__init__(params, defaults)
 
     def __setstate__(self, state):
-        super(PowerRanger, self).__setstate__(state)
+        super(HyperRangerMod, self).__setstate__(state)
 
     def step(self, activate_IA=False, closure=None):
 
@@ -566,7 +564,7 @@ class HyperRangerMod(Optimizer):
                     continue
                 grad = p.grad.data.float()
                 if grad.is_sparse:
-                    raise RuntimeError('PowerRanger does not support sparse gradients')
+                    raise RuntimeError('HyperRangerMod does not support sparse gradients')
 
                 state = self.state[p]
 
@@ -630,6 +628,7 @@ class HyperRangerMod(Optimizer):
                     du = state['cached_hypergrad_comp']
                     h = torch.dot(grad.view(-1), du)
                     group['lr'] -= hypergrad_lr * h
+                    torch.max(group['lr'], torch.zeros_like(group['lr']), out=group['lr'])
 
                 exp_avg_sq.mul_(beta2).addcmul_(1 - beta2, grad, grad)
                 exp_avg.mul_(beta1).add_(1 - beta1, grad)
@@ -660,24 +659,31 @@ class HyperRangerMod(Optimizer):
 
                 p.data.add_(-n*momentum)
 
+                if lookahead_step:
+                    dalpha = alpha
+                elif do_IA:
+                    dalpha = (1/(state["num_models"]+1.0))
+                else:
+                    dalpha = 1.0
+
                 if hypergrad_lr > 0.0:
 
                     if beta3 > 0.0:
-                        grad_from_n = -(momentum/denom)
+                        grad_from_n = -(dalpha*momentum/denom)
 
                         if self.AdaMod_bias_correct:
-                            grad_from_n_avg_ = -((1-beta3)/bias_correction3)*(momentum/denom)
+                            grad_from_n_avg_ = -(dalpha*(1-beta3)/bias_correction3)*(momentum/denom)
                             du = torch.where(n_avg_ < n,
                                              grad_from_n_avg_,
                                              grad_from_n)
                         else:
-                            grad_from_n_avg = -(1-beta3)*(momentum/denom)
+                            grad_from_n_avg = -dalpha*(1-beta3)*(momentum/denom)
                             du = torch.where(n_avg < n,
                                              grad_from_n_avg,
                                              grad_from_n)
 
                     else:
-                        du = -(momentum/denom)
+                        du = -(dalpha*momentum/denom)
 
                     state['cached_hypergrad_comp'] = du.view(-1)
 
@@ -695,5 +701,3 @@ class HyperRangerMod(Optimizer):
                     state["num_models"] += 1
 
         return loss
-
-
