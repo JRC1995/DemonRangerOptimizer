@@ -265,7 +265,7 @@ optimizer = DemonRanger(params=model.parameters(),
  
  * Adam: [https://arxiv.org/abs/1412.6980](https://arxiv.org/abs/1412.6980)
  * AMSGrad: https://arxiv.org/abs/1904.09237
- * QHAdam: https://arxiv.org/abs/1810.06801, https://github.com/facebookresearch/qhoptim/blob/master/qhoptim/pyt/qhadam.py
+ * QHAdam: https://arxiv.org/abs/1810.06801
  * Gradient Noise: https://arxiv.org/abs/1511.06807
  * AdamW: https://arxiv.org/abs/1711.05101
  * RAdam: https://arxiv.org/abs/1908.03265, https://github.com/LiyuanLucasLiu/RAdam
