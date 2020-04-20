@@ -236,3 +236,233 @@ class DemonRanger(Optimizer):
                     state["num_models"] += 1
 
         return loss
+    
+    
+
+class HyperRanger(Optimizer):
+
+    def __init__(self, params, lr=1e-3,
+                 betas=(0.999, 0.999),
+                 nus=(0.7, 1.0),
+                 eps=1e-7,
+                 gamma=0.0001,
+                 nostalgia=True,
+                 use_demon=True,
+                 hypergrad_lr=1e-7,
+                 HDM=False,
+                 hypertune_nu1=False,
+                 p=0.5,
+                 k=5,
+                 alpha=0.8,
+                 IA=True,
+                 IA_cycle=1000,
+                 epochs=100,
+                 step_per_epoch=None,
+                 weight_decay=0,
+                 use_gc=True):
+        
+        #betas = (beta1 for first order moments, beta2 for second order moments)
+        #nus = (nu1,nu2) (for quasi hyperbolic momentum)
+        #eps = small value for numerical stability (avoid divide by zero)
+        #k = lookahead cycle
+        #alpha = outer learning rate (lookahead)
+        #gamma = used for nostalgia
+        #nostalgia = bool to decide whether to use nostalgia (from Nostalgic Adam or NosAdam)
+        #use_demon = bool to decide whether to use DEMON (Decaying Momentum) or not
+        #hypergrad_lr = learning rate for updating hyperparameters (like lr) through hypergradient descent (probably need to increase around 0.02 if HDM is True). Set to 0.0 to disable hypergradient descent.
+        #HDM = bool to decide whether to use Multiplicative rule for updating hyperparameters or not
+        #hypertune_nu1 = bool to decide whether apply hypergradient descent on nu1 as well or not.
+        #p = p from PAdam
+        #IA = bool to decide if Iterate Averaging is ever going to be used
+        #IA_cycle = Iterate Averaging Cycle (Recommended to initialize with no. of iterations in Epoch) (doesn't matter if you are not using IA)
+        #epochs = No. of epochs you plan to use (Only relevant if using DEMON)
+        #step_per_epoch = No. of iterations in an epoch (only relevant if using DEMON)
+        #weight decay = decorrelated weight decay value
+        #use_gc = bool to determine whether to use gradient centralization or not.
+        #use_grad_noise = bool to determine whether to use gradient noise or not. 
+
+        if not 0.0 <= lr:
+            raise ValueError("Invalid learning rate: {}".format(lr))
+        if not 0.0 <= eps:
+            raise ValueError("Invalid epsilon value: {}".format(eps))
+        if not 0.0 <= betas[0] < 1.0:
+            raise ValueError("Invalid beta parameter at index 0: {}".format(betas[0]))
+        if not 0.0 <= betas[1] < 1.0:
+            raise ValueError("Invalid beta parameter at index 1: {}".format(betas[1]))
+        if not 0.0 <= nus[0] <= 1.0:
+            raise ValueError("Invalid nu parameter at index 0: {}".format(nus[0]))
+        if not 0.0 <= nus[1] <= 1.0:
+            raise ValueError("Invalid nu parameter at index 1: {}".format(nus[1]))
+
+        self.nostalgia = nostalgia
+        self.use_demon = use_demon
+        self.k = k
+        self.IA = IA
+        self.IA_cycle = IA_cycle
+        self.epochs = epochs
+        if step_per_epoch is None:
+            self.step_per_epoch = IA_cycle
+        else:
+            self.step_per_epoch = step_per_epoch
+        self.use_gc = use_gc
+        self.T = self.epochs*self.step_per_epoch
+        self.hypertune_nu1 = hypertune_nu1
+        self.HDM = HDM
+
+        defaults = dict(lr=lr,
+                        betas=betas,
+                        nu1=nus[0],
+                        nu2=nus[1],
+                        eps=eps,
+                        alpha=alpha,
+                        gamma=gamma,
+                        p=p,
+                        hypergrad_lr=hypergrad_lr,
+                        weight_decay=weight_decay)
+        super(HyperRanger, self).__init__(params, defaults)
+
+    def __setstate__(self, state):
+        super(HyperRanger, self).__setstate__(state)
+
+    def step(self, activate_IA=False, display=False, closure=None):
+
+        loss = None
+        if closure is not None:
+            loss = closure()
+
+        for group in self.param_groups:
+
+            for p in group['params']:
+                if p.grad is None:
+                    continue
+                grad = p.grad.data.float()
+                if grad.is_sparse:
+                    raise RuntimeError('HyperRanger does not support sparse gradients')
+
+                state = self.state[p]
+
+                hypergrad_lr = group['hypergrad_lr']
+                beta1_init, beta2 = group['betas']
+                wd = group['weight_decay']
+                alpha = group['alpha']
+                gamma = group['gamma']
+
+                if len(state) == 0:
+                    state['step'] = 0
+                    state['exp_avg'] = torch.zeros_like(p.data)
+                    state['exp_avg_sq'] = torch.zeros_like(p.data)
+
+                    if self.IA:
+                        state['num_models'] = 0
+                    if self.IA or (self.k > 0):
+                        state['cached_params'] = p.data.clone()
+                    if self.nostalgia:
+                        state['B_old'] = 0
+                        state['B_new'] = 1
+                    if hypergrad_lr > 0.0:
+                        state['prev_lr_grad'] = torch.zeros_like(grad.view(-1))
+                        if self.hypertune_nu1:
+                            state['prev_nu_grad'] = torch.zeros_like(grad.view(-1))
+
+                state['step'] += 1
+                exp_avg, exp_avg_sq = state['exp_avg'], state['exp_avg_sq']
+
+                if self.use_demon:
+                    temp = 1-(state['step']/self.T)
+                    beta1 = beta1_init * temp / ((1-beta1_init)+beta1_init*temp)
+                else:
+                    beta1 = beta1_init
+
+                if self.nostalgia:
+                    beta2 = state['B_old']/state['B_new']
+                    state['B_old'] += math.pow(state['step'], -gamma)
+                    state['B_new'] += math.pow(state['step']+1, -gamma)
+
+                do_IA = False
+                lookahead_step = False
+
+                if self.IA and activate_IA:
+                    lookahead_step = False
+                    if state['step'] % self.IA_cycle == 0:
+                        do_IA = True
+                elif self.k == 0:
+                    lookahead_step = False
+                else:
+                    if state['step'] % self.k == 0:
+                        lookahead_step = True
+                    else:
+                        lookahead_step = False
+
+                if self.use_gc:
+                    grad.add_(-grad.mean(dim=tuple(range(1, len(list(grad.size())))), keepdim=True))
+
+                if state['step'] > 1 and hypergrad_lr > 0.0:
+                    prev_lr_grad = state['prev_lr_grad']
+                    h = torch.dot(grad.view(-1), prev_lr_grad)
+
+                    if self.HDM:
+                        grad_norm = grad.view(-1).norm()
+                        norm_denom = grad_norm*(prev_lr_grad.norm())
+                        norm_denom.add_(group['eps'])
+                        group['lr'] = group['lr']*(1-hypergrad_lr*(h/norm_denom))
+                    else:
+                        group['lr'] -= hypergrad_lr * h
+
+                    if display:
+                        print(group['lr'])
+
+                    if self.hypertune_nu1:
+                        prev_nu_grad = state['prev_nu_grad']
+                        h = torch.dot(grad.view(-1), prev_nu_grad)
+                        if self.HDM:
+                            norm_denom = grad_norm*(prev_nu_grad.norm())
+                            norm_denom.add_(group['eps'])
+                            group['nu1'] = group['nu1']*(1-hypergrad_lr*(h/norm_denom))
+                        else:
+                            group['nu1'] -= hypergrad_lr * h
+
+                nu1 = group['nu1']
+                nu2 = group['nu2']
+                exp_avg_sq.mul_(beta2).addcmul_(1 - beta2, grad, grad)
+                exp_avg.mul_(beta1).add_(1 - beta1, grad)
+
+                momentum = exp_avg.clone()
+                bias_correction1 = 1 - (beta1 ** state['step'])
+                momentum.div_(bias_correction1)
+
+                vt = exp_avg_sq.clone()
+
+                if not self.nostalgia:
+                    vt.div_(1 - (beta2 ** state['step']))
+                if nu2 != 1.0:
+                    vt.mul_(nu2).addcmul_(1-nu2, grad, grad)
+
+                denom = vt.pow_(group['p']).add_(group['eps'])
+
+                n = group['lr']/denom
+
+                if hypergrad_lr > 0.0 and self.hypertune_nu1:
+                    state['prev_nu_grad'] = (-n * (momentum - grad)).view(-1)
+
+                momentum.mul_(nu1).add_(1-nu1, grad)  # quasi hyperbolic momentum
+
+                if hypergrad_lr > 0.0:
+                    state['prev_lr_grad'] = -(momentum/denom).view(-1)
+
+                p.data.add_(-n*momentum)
+
+                if wd != 0:
+                    p.data.add_(-wd*group['lr'], p.data)
+
+                if lookahead_step:
+                    p.data.mul_(alpha).add_(1.0 - alpha, state['cached_params'])
+                    state['cached_params'].copy_(p.data)
+
+                if do_IA:
+                    p.data.add_(state["num_models"], state['cached_params']
+                                ).div_(state["num_models"]+1.0)
+                    state['cached_params'].copy_(p.data)
+                    state["num_models"] += 1
+
+        return loss
+
