@@ -2,7 +2,7 @@
 
 Quasi Hyperbolic Rectified DEMON (Decaying Momentum) Adam/Amsgrad with AdaMod, Gradient Centralization, Lookahead, iterate averaging, and decorrelated weight decay.
 
-Also, other variants with Nostalgia (NosAdam), P (from PAdam), and Hypergradient Descent. 
+Also, other variants with Nostalgia (NosAdam), P (from PAdam), and Hypergradient Descent (see HyperRanger and HyperRangerMod in optimizers.py) 
 
 ## How to use:
 
