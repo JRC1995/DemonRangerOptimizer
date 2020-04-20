@@ -467,6 +467,8 @@ class HyperRanger(Optimizer):
 
 
 class HyperRangerMod(Optimizer):
+    # Different from HyperRanger integrates AdaMod, and hyperdescent through it. Slower, however.
+    # Also lacks certain options compared to HyperRanger (like hypertunability of nu1) or HDM though they can be added here as well.
 
     def __init__(self, params, lr=1e-3,
                  betas=(0.999, 0.999, 0.0),
