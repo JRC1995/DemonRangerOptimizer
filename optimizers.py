@@ -78,10 +78,10 @@ class LRangerMod(Optimizer):
                         p=p,
                         alpha=alpha,
                         weight_decay=weight_decay)
-        super(LinearRanger, self).__init__(params, defaults)
+        super(LRangerMod, self).__init__(params, defaults)
 
     def __setstate__(self, state):
-        super(LinearRanger, self).__setstate__(state)
+        super(LRangerMod, self).__setstate__(state)
 
     def apply_AdaMod(self, beta3, n_avg, n, step):
         n_avg.mul_(beta3).add_(1 - beta3, n)
@@ -106,7 +106,7 @@ class LRangerMod(Optimizer):
                     continue
                 grad = p.grad.data.float()
                 if grad.is_sparse:
-                    raise RuntimeError('LinearRanger does not support sparse gradients')
+                    raise RuntimeError('LRangerMod does not support sparse gradients')
 
                 state = self.state[p]
 
