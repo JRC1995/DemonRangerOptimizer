@@ -269,6 +269,7 @@ optimizer = DemonRanger(params=model.parameters(),
  * Gradient Noise: https://arxiv.org/abs/1511.06807
  * AdamW: https://arxiv.org/abs/1711.05101
  * RAdam: https://arxiv.org/abs/1908.03265, https://github.com/LiyuanLucasLiu/RAdam
+ * More on RAdam: https://arxiv.org/abs/1910.04209v1
  * Lookahead: https://arxiv.org/abs/1907.08610
  * Ranger: https://github.com/lessw2020/Ranger-Deep-Learning-Optimizer
  * Gradient Centralization: https://arxiv.org/abs/2004.01461v2
