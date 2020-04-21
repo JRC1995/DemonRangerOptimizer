@@ -271,8 +271,8 @@ optimizer = DemonRanger(params=model.parameters(),
  
 ## Stuffs to try/add:
 
-Dense-sparse-Dense Training: https://arxiv.org/pdf/1607.04381.pdf
-Bayesian Deep Learning: SWAG/SWA 
+* Dense-sparse-Dense Training: https://arxiv.org/pdf/1607.04381.pdf
+* Bayesian Deep Learning: SWAG/SWA 
 
  ## References:
  
