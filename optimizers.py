@@ -390,8 +390,6 @@ class DemonRanger(Optimizer):
 
                         n = (lr*R)/denom
 
-                        print(R*lr)
-
                         if self.AdaMod:
                             n_avg = state['n_avg']
                             n = self.apply_AdaMod(beta3, n_avg, n, step=state['step'])
