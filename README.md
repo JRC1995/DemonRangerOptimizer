@@ -4,6 +4,14 @@ Quasi Hyperbolic Rectified DEMON (Decaying Momentum) Adam/Amsgrad with AdaMod, G
 
 Also, other variants with Nostalgia (NosAdam), P (from PAdam), and Hypergradient Descent (see HyperRanger and HyperRangerMod in optimizers.py) 
 
+## Notes:
+
+* Hyperxxx series optimizers implements hypergradient descent for dynamic learning rate updates. Some optimizers like  HDQHSGDW implements hypergradient descent for all hyperparameters - beta, nu, lr. Unlike the original implementation (https://arxiv.org/abs/1703.04782, https://github.com/gbaydin/hypergradient-descent) they take care of the gradients due to the weight decay and other things. 
+
+* LRangerMod uses Linear Warmup within Adam/AMSGrad based on the rule of thumb as in (https://arxiv.org/abs/1910.04209v1). Note Rectified Adam boils down to a fixed (not dynamic) form of learning rate scheduling similar to a linear warmup. 
+
+* The file explains the parameters for each different synergistic optimizers. 
+
 ## How to use:
 
 
