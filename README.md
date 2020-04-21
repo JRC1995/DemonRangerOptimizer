@@ -279,4 +279,4 @@ optimizer = DemonRanger(params=model.parameters(),
  * Hypergradient Descent: https://arxiv.org/abs/1703.04782, https://github.com/gbaydin/hypergradient-descent
  * Nostalgic Adam: https://arxiv.org/abs/1805.07557, https://github.com/andrehuang/NostalgicAdam-NosAdam
  * PAdam: https://arxiv.org/abs/1806.06763, https://github.com/uclaml/Padam, https://arxiv.org/pdf/1901.09517.pdf
- 
+ * LaProp: https://arxiv.org/abs/2002.04839
