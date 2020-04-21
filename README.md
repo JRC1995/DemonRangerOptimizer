@@ -269,7 +269,7 @@ optimizer = DemonRanger(params=model.parameters(),
  # just do optimizer.step(IA_activate=IA_activate) when necessary (change IA_activate to True near the end of training based on some scheduling scheme or tuned hyperparameter--- alternative to learning rate scheduling)
  ```
  
-## Stuffs to try/add:
+## Stuffs to try or add:
 
 * Dense-sparse-Dense Training: https://arxiv.org/pdf/1607.04381.pdf
 * Bayesian Deep Learning: SWAG/SWA 
