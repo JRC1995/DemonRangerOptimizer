@@ -48,7 +48,7 @@ class LRangerMod(Optimizer):
         if not 0.0 <= betas[1] < 1.0:
             raise ValueError("Invalid beta parameter at index 1: {}".format(betas[1]))
         if not 0.0 <= betas[2] < 1.0:
-            raise ValueError("Invalid beta parameter at index 1: {}".format(betas[2]))
+            raise ValueError("Invalid beta parameter at index 2: {}".format(betas[2]))
         if not 0.0 <= nus[0] <= 1.0:
             raise ValueError("Invalid nu parameter at index 0: {}".format(nus[0]))
         if not 0.0 <= nus[1] <= 1.0:
@@ -241,7 +241,7 @@ class DemonRanger(Optimizer):
         if not 0.0 <= betas[1] < 1.0:
             raise ValueError("Invalid beta parameter at index 1: {}".format(betas[1]))
         if not 0.0 <= betas[2] < 1.0:
-            raise ValueError("Invalid beta parameter at index 1: {}".format(betas[2]))
+            raise ValueError("Invalid beta parameter at index 2: {}".format(betas[2]))
         if not 0.0 <= nus[0] <= 1.0:
             raise ValueError("Invalid nu parameter at index 0: {}".format(nus[0]))
         if not 0.0 <= nus[1] <= 1.0:
@@ -734,7 +734,7 @@ class HyperRangerMod(Optimizer):
         if not 0.0 <= betas[1] < 1.0:
             raise ValueError("Invalid beta parameter at index 1: {}".format(betas[1]))
         if not 0.0 <= betas[2] < 1.0:
-            raise ValueError("Invalid beta parameter at index 1: {}".format(betas[2]))
+            raise ValueError("Invalid beta parameter at index 2: {}".format(betas[2]))
         if not 0.0 <= nus[0] <= 1.0:
             raise ValueError("Invalid nu parameter at index 0: {}".format(nus[0]))
         if not 0.0 <= nus[1] <= 1.0:
