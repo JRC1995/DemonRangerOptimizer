@@ -6,7 +6,7 @@ import numpy as np
 
 class LRangerMod(Optimizer):
 
-    # AMSGrad/Adam + AdaMod + QH Momentum + Iterat Averaging + Lookahead + Rule of Thumb Linear Warmup (instead of RAdam Rectification) + P from PAdam
+    # AMSGrad/Adam + AdaMod + QH Momentum + Iterate Averaging + Lookahead + Rule of Thumb Linear Warmup (instead of RAdam Rectification) + P from PAdam
 
     def __init__(self, params, lr=1e-3,
                  betas=(0.999, 0.999, 0.999),
@@ -19,6 +19,7 @@ class LRangerMod(Optimizer):
                  AdaMod=True,
                  AdaMod_bias_correct=True,
                  IA=True,
+                 use_gc=False,
                  IA_cycle=1000,
                  epochs=100,
                  step_per_epoch=None,
@@ -63,6 +64,7 @@ class LRangerMod(Optimizer):
         self.IA_cycle = IA_cycle
         self.IA = IA
         self.AdaMod = AdaMod
+        self.use_gc = use_gc
         self.AdaMod_bias_correct = AdaMod_bias_correct
         if step_per_epoch is None:
             self.step_per_epoch = IA_cycle
@@ -145,6 +147,9 @@ class LRangerMod(Optimizer):
                         lookahead_step = True
                     else:
                         lookahead_step = False
+
+                if self.use_gc:
+                    grad.add_(-grad.mean(dim=tuple(range(1, len(list(grad.size())))), keepdim=True))
 
                 exp_avg_sq.mul_(beta2).addcmul_(1 - beta2, grad, grad)
                 exp_avg.mul_(beta1).add_(1 - beta1, grad)
