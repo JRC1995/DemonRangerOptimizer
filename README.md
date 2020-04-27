@@ -6,7 +6,7 @@ Also, other variants with Nostalgia (NosAdam), P (from PAdam), LaProp, and Hyper
 
 ## Notes:
 
-* Hyperxxx series optimizers implements hypergradient descent for dynamic learning rate updates. Some optimizers like  HDQHSGDW implements hypergradient descent for all hyperparameters - beta, nu, lr. Unlike the original implementation (https://arxiv.org/abs/1703.04782, https://github.com/gbaydin/hypergradient-descent) they take care of the gradients due to the weight decay and other things. 
+* Hyperxxx series optimizers implements hypergradient descent for dynamic learning rate updates. Some optimizers like  HDQHSGDW implements hypergradient descent for all hyperparameters - beta, nu, lr. Unlike the original implementation (https://arxiv.org/abs/1703.04782, https://github.com/gbaydin/hypergradient-descent) they take care of the gradients due to the weight decay and other things. (I also implement state level lr so that lr for each parameters will be hypertuned through hypergradient descent separately instead of in the group level like in the original implementation)
 
 * LRangerMod uses Linear Warmup within Adam/AMSGrad based on the rule of thumb as in (https://arxiv.org/abs/1910.04209v1). Note Rectified Adam boils down to a fixed (not dynamic) form of learning rate scheduling similar to a linear warmup. 
 
