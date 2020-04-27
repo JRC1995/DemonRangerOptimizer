@@ -17,6 +17,7 @@ class LRangerMod(Optimizer):
                  alpha=0.8,
                  amsgrad=True,
                  AdaMod=True,
+                 warmup=True,
                  AdaMod_bias_correct=True,
                  IA=True,
                  use_gc=False,
@@ -66,6 +67,7 @@ class LRangerMod(Optimizer):
         self.AdaMod = AdaMod
         self.use_gc = use_gc
         self.AdaMod_bias_correct = AdaMod_bias_correct
+        self.warmup = warmup
         if step_per_epoch is None:
             self.step_per_epoch = IA_cycle
         else:
@@ -129,7 +131,12 @@ class LRangerMod(Optimizer):
                 exp_avg, exp_avg_sq = state['exp_avg'], state['exp_avg_sq']
                 beta1, beta2, beta3 = group['betas']
                 nu1, nu2 = group['nus']
-                lr = w*group['lr']
+
+                if self.warmup:
+                    lr = w*group['lr']
+                else:
+                    lr = group['lr']
+
                 wd = group['weight_decay']
                 alpha = group['alpha']
 
@@ -551,6 +558,7 @@ class HyperRanger(Optimizer):
                     state['step'] = 0
                     state['exp_avg'] = torch.zeros_like(p.data)
                     state['exp_avg_sq'] = torch.zeros_like(p.data)
+                    state['lr'] = group['lr']
 
                     if self.IA:
                         state['num_models'] = 0
@@ -560,8 +568,10 @@ class HyperRanger(Optimizer):
                         state['B_old'] = 0
                         state['B_new'] = 1
                     if hypergrad_lr > 0.0:
+                        state['nu1'] = group['nu1']
                         state['prev_lr_grad'] = torch.zeros_like(grad.view(-1))
                         if self.hypertune_nu1:
+
                             state['prev_nu_grad'] = torch.zeros_like(grad.view(-1))
 
                 state['step'] += 1
@@ -601,14 +611,14 @@ class HyperRanger(Optimizer):
                         grad_norm = grad.view(-1).norm()
                         norm_denom = grad_norm*(prev_lr_grad.norm())
                         norm_denom.add_(group['eps'])
-                        group['lr'] = group['lr']*(1-hypergrad_lr*(h/norm_denom))
+                        state['lr'] = state['lr']*(1-hypergrad_lr*(h/norm_denom))
                     else:
-                        group['lr'] -= hypergrad_lr * h
+                        state['lr'] -= hypergrad_lr * h
 
-                    torch.max(group['lr'], torch.zeros_like(group['lr']), out=group['lr'])
+                    torch.max(state['lr'], torch.zeros_like(state['lr']), out=state['lr'])
 
                     if display:
-                        print("lr", group['lr'])
+                        print("lr", state['lr'])
 
                     if self.hypertune_nu1:
                         prev_nu_grad = state['prev_nu_grad']
@@ -616,20 +626,20 @@ class HyperRanger(Optimizer):
                         if self.HDM:
                             norm_denom = grad_norm*(prev_nu_grad.norm())
                             norm_denom.add_(group['eps'])
-                            group['nu1'] = group['nu1']*(1-hypergrad_lr*(h/norm_denom))
+                            state['nu1'] = state['nu1']*(1-hypergrad_lr*(h/norm_denom))
                         else:
-                            group['nu1'] -= hypergrad_lr * h
+                            state['nu1'] -= hypergrad_lr * h
 
-                        torch.max(group['nu1'], torch.zeros_like(group['nu1']), out=group['nu1'])
-                        torch.min(group['nu1'], torch.ones_like(group['nu1']), out=group['nu1'])
+                        torch.max(state['nu1'], torch.zeros_like(state['nu1']), out=state['nu1'])
+                        torch.min(state['nu1'], torch.ones_like(state['nu1']), out=state['nu1'])
 
                     if display:
-                        print("nu", group['nu1'])
+                        print("nu", state['nu1'])
 
                 if self.use_gc:
                     grad.add_(-grad.mean(dim=tuple(range(1, len(list(grad.size())))), keepdim=True))
 
-                nu1 = group['nu1']
+                nu1 = state['nu1']
                 nu2 = group['nu2']
                 exp_avg_sq.mul_(beta2).addcmul_(1 - beta2, grad, grad)
                 exp_avg.mul_(beta1).add_(1 - beta1, grad)
@@ -647,7 +657,7 @@ class HyperRanger(Optimizer):
 
                 denom = vt.pow_(group['p']).add_(group['eps'])
 
-                n = group['lr']/denom
+                n = state['lr']/denom
 
                 if lookahead_step:
                     dalpha = alpha
@@ -668,7 +678,7 @@ class HyperRanger(Optimizer):
                 p.data.add_(-n*momentum)
 
                 if wd != 0:
-                    p.data.add_(-wd*group['lr'], p.data)
+                    p.data.add_(-wd*state['lr'], p.data)
 
                 if lookahead_step:
                     p.data.mul_(alpha).add_(1.0 - alpha, state['cached_params'])
@@ -850,10 +860,10 @@ class HyperRangerMod(Optimizer):
                 if state['step'] > 1 and hypergrad_lr > 0.0:
                     du = state['cached_hypergrad_comp']
                     h = torch.dot(grad.view(-1), du)
-                    group['lr'] -= hypergrad_lr * h
-                    torch.max(group['lr'], torch.zeros_like(group['lr']), out=group['lr'])
+                    state['lr'] -= hypergrad_lr * h
+                    torch.max(state['lr'], torch.zeros_like(state['lr']), out=state['lr'])
                     if display:
-                        print(group['lr'])
+                        print(state['lr'])
 
                 if self.use_gc:
                     grad.add_(-grad.mean(dim=tuple(range(1, len(list(grad.size())))), keepdim=True))
@@ -872,7 +882,7 @@ class HyperRangerMod(Optimizer):
 
                 denom = vt.pow_(group['p']).add_(group['eps'])
 
-                n = group['lr']/denom
+                n = state['lr']/denom
 
                 if beta3 > 0.0:  # apply AdaMod
                     n_avg = state['n_avg']
@@ -917,7 +927,7 @@ class HyperRangerMod(Optimizer):
                     state['cached_hypergrad_comp'] = du.view(-1)
 
                 if wd != 0:
-                    p.data.add_(-wd*group['lr'], p.data)
+                    p.data.add_(-wd*state['lr'], p.data)
 
                 if lookahead_step:
                     p.data.mul_(alpha).add_(1.0 - alpha, state['cached_params'])
@@ -1010,6 +1020,9 @@ class HDQHSGDW(Optimizer):
 
                 if len(state) == 0:
                     state['step'] = 0
+                    state['lr'] = group['lr']
+                    state['nu'] = group['nu']
+                    state['beta'] = group['beta']
                     state['exp_avg'] = torch.zeros_like(p.data)
                     if self.k > 0:
                         state['cached_params'] = p.data.clone()
@@ -1037,47 +1050,47 @@ class HDQHSGDW(Optimizer):
                     prev_beta_grad = state['prev_beta_grad']
                     prev_nu_grad = state['prev_nu_grad']
 
-                    group['lr'] = self.hyperupdate(update=group['lr'],
+                    state['lr'] = self.hyperupdate(update=state['lr'],
                                                    grad=grad,
                                                    grad_comp=prev_lr_grad,
                                                    hypergrad_lr=hypergrad_lr,
                                                    eps=group['eps'])
 
-                    torch.max(group['lr'], torch.zeros_like(group['lr']), out=group['lr'])
+                    torch.max(state['lr'], torch.zeros_like(state['lr']), out=state['lr'])
 
                     if display:
-                        print("lr", group['lr'])
+                        print("lr", state['lr'])
 
-                    group['beta'] = self.hyperupdate(update=group['beta'],
+                    state['beta'] = self.hyperupdate(update=state['beta'],
                                                      grad=grad,
                                                      grad_comp=prev_beta_grad,
                                                      hypergrad_lr=hypergrad_lr,
                                                      eps=group['eps'])
 
-                    torch.max(group['beta'], torch.zeros_like(group['beta']), out=group['beta'])
-                    torch.min(group['beta'], torch.ones_like(group['beta']), out=group['beta'])
+                    torch.max(state['beta'], torch.zeros_like(state['beta']), out=state['beta'])
+                    torch.min(state['beta'], torch.ones_like(state['beta']), out=state['beta'])
 
                     if display:
                         print("beta", group['beta'])
 
-                    group['nu'] = self.hyperupdate(update=group['nu'],
+                    state['nu'] = self.hyperupdate(update=state['nu'],
                                                    grad=grad,
                                                    grad_comp=prev_beta_grad,
                                                    hypergrad_lr=hypergrad_lr,
-                                                   eps=group['nu'])
+                                                   eps=group['eps'])
 
-                    torch.max(group['nu'], torch.zeros_like(group['nu']), out=group['nu'])
-                    torch.min(group['nu'], torch.ones_like(group['nu']), out=group['nu'])
+                    torch.max(state['nu'], torch.zeros_like(state['nu']), out=state['nu'])
+                    torch.min(state['nu'], torch.ones_like(state['nu']), out=state['nu'])
 
                     if display:
-                        print("nu", group['nu'])
+                        print("nu", state['nu'])
 
                 if self.use_gc:
                     grad.add_(-grad.mean(dim=tuple(range(1, len(list(grad.size())))), keepdim=True))
 
-                nu = group['nu']
-                beta = group['beta']
-                lr = group['lr']
+                nu = state['nu']
+                beta = state['beta']
+                lr = state['lr']
 
                 if lookahead_step:
                     dalpha = alpha
@@ -1232,6 +1245,8 @@ class HyperProp(Optimizer):
                 gamma = group['gamma']
 
                 if len(state) == 0:
+                    state['lr'] = group['lr']
+                    state['nu'] = group['nu']
                     state['step'] = 0
                     state['exp_avg'] = torch.zeros_like(p.data)
                     state['exp_avg_sq'] = torch.zeros_like(p.data)
@@ -1285,14 +1300,14 @@ class HyperProp(Optimizer):
                         grad_norm = grad.view(-1).norm()
                         norm_denom = grad_norm*(prev_lr_grad.norm())
                         norm_denom.add_(group['eps'])
-                        group['lr'] = group['lr']*(1-hypergrad_lr*(h/norm_denom))
+                        state['lr'] = state['lr']*(1-hypergrad_lr*(h/norm_denom))
                     else:
-                        group['lr'] -= hypergrad_lr * h
+                        state['lr'] -= hypergrad_lr * h
 
-                    torch.max(group['lr'], torch.zeros_like(group['lr']), out=group['lr'])
+                    torch.max(state['lr'], torch.zeros_like(state['lr']), out=state['lr'])
 
                     if display:
-                        print("lr", group['lr'])
+                        print("lr", state['lr'])
 
                     if self.hypertune_nu:
                         prev_nu_grad = state['prev_nu_grad']
@@ -1300,20 +1315,20 @@ class HyperProp(Optimizer):
                         if self.HDM:
                             norm_denom = grad_norm*(prev_nu_grad.norm())
                             norm_denom.add_(group['eps'])
-                            group['nu'] = group['nu']*(1-hypergrad_lr*(h/norm_denom))
+                            state['nu'] = state['nu']*(1-hypergrad_lr*(h/norm_denom))
                         else:
-                            group['nu'] -= hypergrad_lr * h
+                            state['nu'] -= hypergrad_lr * h
 
-                        torch.max(group['nu'], torch.zeros_like(group['nu']), out=group['nu'])
-                        torch.min(group['nu'], torch.ones_like(group['nu']), out=group['nu'])
+                        torch.max(state['nu'], torch.zeros_like(state['nu']), out=state['nu'])
+                        torch.min(state['nu'], torch.ones_like(state['nu']), out=state['nu'])
 
                     if display:
-                        print("nu", group['nu'])
+                        print("nu", state['nu'])
 
                 if self.use_gc:
                     grad.add_(-grad.mean(dim=tuple(range(1, len(list(grad.size())))), keepdim=True))
 
-                nu = group['nu']
+                nu = state['nu']
                 exp_avg_sq.mul_(beta2).addcmul_(1 - beta2, grad, grad)
 
                 vt = exp_avg_sq.clone()
@@ -1337,7 +1352,7 @@ class HyperProp(Optimizer):
                     dalpha = 1.0
 
                 if hypergrad_lr > 0.0 and self.hypertune_nu:
-                    state['prev_nu_grad'] = (-dalpha*group['lr']*(momentum - grad)).view(-1)
+                    state['prev_nu_grad'] = (-dalpha*state['lr']*(momentum - grad)).view(-1)
 
                 momentum.mul_(nu).add_(1-nu, grad)  # quasi hyperbolic momentum
 
@@ -1345,10 +1360,10 @@ class HyperProp(Optimizer):
                     temp = dalpha*(-momentum - wd*p.data)
                     state['prev_lr_grad'] = temp.view(-1)
 
-                p.data.add_(-group['lr']*momentum)
+                p.data.add_(-state['lr'] * momentum)
 
                 if wd != 0:
-                    p.data.add_(-wd*group['lr'], p.data)
+                    p.data.add_(-wd*state['lr'], p.data)
 
                 if lookahead_step:
                     p.data.mul_(alpha).add_(1.0 - alpha, state['cached_params'])
