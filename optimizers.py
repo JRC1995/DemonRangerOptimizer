@@ -155,7 +155,7 @@ class LRangerMod(Optimizer):
                     else:
                         lookahead_step = False
 
-                if self.use_gc:
+                if self.use_gc and grad.view(-1).size(0) > 1:
                     grad.add_(-grad.mean(dim=tuple(range(1, len(list(grad.size())))), keepdim=True))
 
                 exp_avg_sq.mul_(beta2).addcmul_(1 - beta2, grad, grad)
@@ -365,7 +365,7 @@ class DemonRanger(Optimizer):
                     grad_noise = torch.empty_like(grad).normal_(mean=0.0, std=math.sqrt(grad_var))
                     grad.add_(grad_noise)
 
-                if self.use_gc:
+                if self.use_gc and grad.view(-1).size(0) > 1:
                     grad.add_(-grad.mean(dim=tuple(range(1, len(list(grad.size())))), keepdim=True))
 
                 exp_avg_sq.mul_(beta2).addcmul_(1 - beta2, grad, grad)
@@ -636,7 +636,7 @@ class HyperRanger(Optimizer):
                     if display:
                         print("nu", state['nu1'])
 
-                if self.use_gc:
+                if self.use_gc and grad.view(-1).size(0) > 1:
                     grad.add_(-grad.mean(dim=tuple(range(1, len(list(grad.size())))), keepdim=True))
 
                 nu1 = state['nu1']
@@ -865,7 +865,7 @@ class HyperRangerMod(Optimizer):
                     if display:
                         print(state['lr'])
 
-                if self.use_gc:
+                if self.use_gc and grad.view(-1).size(0) > 1:
                     grad.add_(-grad.mean(dim=tuple(range(1, len(list(grad.size())))), keepdim=True))
 
                 exp_avg_sq.mul_(beta2).addcmul_(1 - beta2, grad, grad)
@@ -1085,7 +1085,7 @@ class HDQHSGDW(Optimizer):
                     if display:
                         print("nu", state['nu'])
 
-                if self.use_gc:
+                if self.use_gc and grad.view(-1).size(0) > 1:
                     grad.add_(-grad.mean(dim=tuple(range(1, len(list(grad.size())))), keepdim=True))
 
                 nu = state['nu']
@@ -1325,7 +1325,7 @@ class HyperProp(Optimizer):
                     if display:
                         print("nu", state['nu'])
 
-                if self.use_gc:
+                if self.use_gc and grad.view(-1).size(0) > 1:
                     grad.add_(-grad.mean(dim=tuple(range(1, len(list(grad.size())))), keepdim=True))
 
                 nu = state['nu']
