@@ -1,6 +1,8 @@
 # DemonRangerOptimizer
 
-Quasi Hyperbolic Rectified DEMON (Decaying Momentum) Adam/Amsgrad with AdaMod, Gradient Centralization, Lookahead, iterate averaging, and decorrelated weight decay.
+**Caution:** Set use_gc as False (gradient centralization can centralize scalar parameters keeping it as always zero which is not something we would would. It will break ReZero. You can take that into account and fix that in the code: make a check to see if the parameter is scalar or not or use it if you don't have any scalar parameters, but don't have much time to update the codes myself at the moment). 
+
+Quasi Hyperbolic Rectified DEMON (Decaying Momentum) Adam/Amsgrad with AdaMod,  Lookahead, iterate averaging, and decorrelated weight decay.
 
 Also, other variants with Nostalgia (NosAdam), P (from PAdam), LaProp, and Hypergradient Descent (see HyperRanger and HyperRangerMod and others in optimizers.py) 
 
