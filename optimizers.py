@@ -815,6 +815,7 @@ class HyperRangerMod(Optimizer):
                     state['step'] = 0
                     state['exp_avg'] = torch.zeros_like(p.data)
                     state['exp_avg_sq'] = torch.zeros_like(p.data)
+                    state['lr'] = group['lr'] 
 
                     if self.IA:
                         state['num_models'] = 0
