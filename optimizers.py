@@ -538,7 +538,7 @@ class HyperRanger(Optimizer):
                 "Invalid nu parameter at index 1: {}".format(nus[1]))
         if not 0.0 <= p <= 0.5:
             raise ValueError("Invalid p parameter: {}".format(p))
-        if not 0.0 <= alpha < 1.0:
+        if not 0.0 <= alpha <= 1.0:
             raise ValueError("Invalid alpha parameter: {}".format(alpha))
 
         self.nostalgia = nostalgia
@@ -824,7 +824,7 @@ class HyperRangerMod(Optimizer):
                 "Invalid nu parameter at index 1: {}".format(nus[1]))
         if not 0.0 <= p <= 0.5:
             raise ValueError("Invalid p parameter: {}".format(p))
-        if not 0.0 <= alpha < 1.0:
+        if not 0.0 <= alpha <= 1.0:
             raise ValueError("Invalid alpha parameter: {}".format(alpha))
 
         self.AdaMod_bias_correct = AdaMod_bias_correct
@@ -1056,7 +1056,7 @@ class HDQHSGDW(Optimizer):
             raise ValueError("Invalid beta parameter: {}".format(beta))
         if not 0.0 <= nu <= 1.0:
             raise ValueError("Invalid nu parameter: {}".format(nu))
-        if not 0.0 <= alpha < 1.0:
+        if not 0.0 <= alpha <= 1.0:
             raise ValueError("Invalid alpha parameter: {}".format(alpha))
 
         self.k = k
@@ -1305,7 +1305,7 @@ class HyperProp(Optimizer):
             raise ValueError("Invalid nu parameter: {}".format(nu))
         if not 0.0 <= p <= 0.5:
             raise ValueError("Invalid p parameter: {}".format(p))
-        if not 0.0 <= alpha < 1.0:
+        if not 0.0 <= alpha <= 1.0:
             raise ValueError("Invalid alpha parameter: {}".format(alpha))
 
         self.nostalgia = nostalgia
