@@ -234,7 +234,8 @@ class DemonRanger(Optimizer):
                  weight_decay=0,
                  use_gc=True,
                  use_grad_noise=False,
-                 use_diffgrad=False):
+                 use_diffgrad=False,
+                 dropout=0.0):
 
         # betas = (beta1 for first order moments, beta2 for second order moments, beta3 for ema over adaptive learning rates (AdaMod))
         # nus = (nu1,nu2) (for quasi hyperbolic momentum)
@@ -254,6 +255,7 @@ class DemonRanger(Optimizer):
         # use_gc = bool to determine whether to use gradient centralization or not.
         # use_grad_noise = bool to determine whether to use gradient noise or not.
         # use_diffgrad = bool to determine whether to use diffgrad or not.
+        # dropout = learning rate dropout, probability of setting learning rate to zero
 
         if not 0.0 <= lr:
             raise ValueError("Invalid learning rate: {}".format(lr))
@@ -276,6 +278,8 @@ class DemonRanger(Optimizer):
                 "Invalid nu parameter at index 1: {}".format(nus[1]))
         if not 0.0 <= alpha <= 1.0:
             raise ValueError("Invalid alpha parameter: {}".format(alpha))
+        if not 0.0 <= dropout < 1.0:
+            raise ValueError("Invalid dropout parameter: {}".format(dropout))
 
         self.use_gc = use_gc
         self.use_grad_noise = use_grad_noise
@@ -302,7 +306,8 @@ class DemonRanger(Optimizer):
                         eps=eps,
                         alpha=alpha,
                         gamma=gamma,
-                        weight_decay=weight_decay)
+                        weight_decay=weight_decay,
+                        dropout=dropout)
         super(DemonRanger, self).__init__(params, defaults)
 
     def __setstate__(self, state):
@@ -438,6 +443,11 @@ class DemonRanger(Optimizer):
                             n = self.apply_AdaMod(
                                 beta3, n_avg, n, step=state['step'])
 
+                        if group['dropout'] > 0.0:
+                            mask = torch.bernoulli(
+                                torch.ones_like(p.data) - group['dropout'])
+                            n = n * mask
+
                         p.data.add_(-n * momentum)
                     else:
                         if self.AdaMod:
@@ -455,6 +465,11 @@ class DemonRanger(Optimizer):
                         n_avg = state['n_avg']
                         n = self.apply_AdaMod(
                             beta3, n_avg, n, step=state['step'])
+
+                    if group['dropout'] > 0.0:
+                        mask = torch.bernoulli(
+                            torch.ones_like(p.data) - group['dropout'])
+                        n = n * mask
 
                     p.data.add_(-n * momentum)
 
